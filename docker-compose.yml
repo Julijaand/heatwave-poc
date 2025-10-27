@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    container_name: timescaledb
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespw
+      - POSTGRES_DB=heatwave_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  nifi:
+    image: apache/nifi:latest
+    container_name: nifi
+    environment:
+      - NIFI_WEB_HTTP_HOST=0.0.0.0
+      - NIFI_WEB_HTTP_PORT=8080
+    ports:
+      - "8080:8080"
+      - "8443:8443"
+    volumes:
+      - nifi_conf:/opt/nifi/nifi-current/conf
+      - nifi_flowfile:/opt/nifi/nifi-current/flowfile_repository
+      - nifi_content:/opt/nifi/nifi-current/content_repository
+      - nifi_provenance:/opt/nifi/nifi-current/provenance_repository
+      - nifi_database:/opt/nifi/nifi-current/database_repository
+      - ./code/postgresql-42.7.4.jar:/opt/nifi/nifi-current/lib/postgresql-42.7.4.jar
+      - ./code/data/mimic_demo:/data/mimic_demo
+    restart: unless-stopped
+
+  cloudbeaver:
+    image: dbeaver/cloudbeaver:latest
+    container_name: cloudbeaver
+    ports:
+      - "8978:8978"
+    volumes:
+      - cloudbeaver_data:/opt/cloudbeaver/workspace
+    restart: unless-stopped
+
+  code-server:
+    build:
+      context: ./code/docker/code-server
+      dockerfile: Dockerfile
+    container_name: code-server
+    environment:
+      - PASSWORD=secretpassword   # change before production
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./code:/home/coder/project
+    restart: unless-stopped
+
+  superset:
+    image: apache/superset:latest
+    container_name: superset
+    environment:
+      - SUPERSET_SECRET_KEY=change_this_key
+    ports:
+      - "8088:8088"
+    volumes:
+      - superset_home:/app/superset_home
+      - ./code/docker/superset/requirements-local.txt:/app/docker/requirements-local.txt:ro
+    restart: unless-stopped
+
+
+# Persistent volumes
+volumes:
+  db_data:
+  cloudbeaver_data:
+  superset_home:
+  heatwave-poc_nifi_flow:
+    external: true
+  nifi_conf:
+  nifi_flowfile:
+  nifi_content:
+  nifi_provenance:
+  nifi_database:

@@ -11,9 +11,12 @@ The idea is to collect data​ on weather (temperature, humidity) and hospitaliz
 
 ​All these tools run on a local computer, without sending data to the cloud, to ensure security.​
 
+# Setup Environment Variables:
+Create the .env file based on the provided example file `.env.example`, replace placeholders with real credentials.
+
+
 # create services via docker containers using docker-compose.yml:
 ```sh
-docker compose down
 docker compose up -d
 ```
 

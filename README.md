@@ -112,3 +112,73 @@ File → Preferences → KNIME → Python
 
 # automatically activate Conda and start KNIME with .sh script:
 ./launch_knime.sh
+```
+
+
+## 🧩 Troubleshooting and Lessons Learned
+
+Throughout the implementation of the **Heatwave Prediction Dashboard**, several technical challenges emerged during the integration of **Apache Superset**, **PostgreSQL (TimescaleDB)**, and **Docker-based components**.  
+Below are the main pain points and the solutions applied.
+
+---
+
+### 1. Database Driver Issue in Superset
+**Problem:**  
+Superset was unable to connect to PostgreSQL, showing the error:  
+`ERROR: Could not load database driver: PostgresEngineSpec`  
+Starting from **Superset 4.1.0**, database drivers like `psycopg2` are no longer bundled with the official image.
+**Solution:**  
+A custom `requirements-local.txt` file was created containing:
+```bash
+psycopg2-binary
+```
+It was then mounted to the correct path and after rebuilding the container, the driver was successfully installed and connections worked as expected.
+
+### 2. NiFi GetFile Processor Not Picking Up Files
+**Problem:**
+The GetFile processor stayed idle (in/out/tasks = 0) and didn’t detect new CSV files.
+No events appeared in Provenance or LogAttribute, even after updating or renaming the file.
+**Solution:**
+Replaced `GetFile` with the `ListFile` + `FetchFile` processor combination:
+`ListFile` lists files from the directory (stateless and multi-node compatible).
+`FetchFile` reads file content into FlowFiles for downstream processing.
+
+### 3. Datatype Mismatch Between Database and NiFi Schema
+**Problem:**
+record_time was treated as text instead of a timestamp
+**Solution:**
+Two fixes tested:
+Temporary: changed DB column to TEXT to confirm data flow.
+Permanent: updated NiFi schema (JsonTreeReader) to define record_time as timestamp, keeping temperature and humidity as double.
+
+### 4. Empty Records After Conversion (ConvertRecord Output {})
+**Problem:**
+ConvertRecord output was empty or contained {}.
+**Solution:**
+Schema mismatch — updated the JsonTreeReader and AvroRecordSetWriter schemas to exactly match the JOLT output fields.
+
+### 5. Code-Server container didn’t have Python installed
+**Problem:**
+When trying to run scripts like simulate_medical.py, the codercom/code-server image lacked Python, resulting in:
+```bash
+bash: python3: command not found
+```
+**Solution:**
+Build a custom code-server image extending the base one with Python and Panda. `Dockerfile` created. 
+This allowed running and testing Python data scripts directly inside VS Code Web.
+
+### 6. Data loss after rebuilding Nifi container 
+**Problem:**
+Losing NiFi processors / flow configuration
+**Solution:**
+Additional volumes mounted for Nifi container by adding them to `docker-compose.yml`.
+So all processors, templates, and state survive restarts.
+
+### 7. Incompatible Python Version for KNIME Integration
+**Problem:**
+KNIME Analytics Platform (as of version 5.5) officially supports Python up to version 3.11 for its scripting integration. Using newer versions (e.g., Python 3.12+) can cause compatibility issues with KNIME’s Python nodes.
+**Solution:**
+Create and use a KNIME-compatible Python environment (recommended via Conda):
+```bash
+conda create -n knime-env -c knime -c conda-forge knime-python-scripting python=3.10
+```

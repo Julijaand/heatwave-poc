@@ -37,23 +37,6 @@ VS Code web: 	http://localhost:8081
 
 login to Nifi:
 docker logs nifi | grep 'Generated'
-Username: 18fdcd52-7753-4753-bbb5-660672747bbe
-Password: QJ90wztxYUuu3Nk32XTxMd4btMbAqzbs
-
-login to Apache Superset:
-Username: admin
-Password: admin
-
-login to CloudBeaver:
-Username: postgres
-Password: Postgrespw1
-
-login to VS Code web:
-Password: secretpassword
-
-login to heatwave_db in CloudBeaver:
-Username: postgres
-Password: postgrespw
 
 # Create processors in Nifi UI 
 check knime_heatwave_data_cleaning_workflow.md
@@ -64,7 +47,7 @@ check knime_heatwave_data_cleaning_workflow.md
 wget -O ADMISSIONS.csv "https://physionet.org/files/mimiciii-demo/1.4/ADMISSIONS.csv?download"
 wget -O DIAGNOSES_ICD.csv "https://physionet.org/files/mimiciii-demo/1.4/DIAGNOSES_ICD.csv?download"
 
-#run .py script
+# run .py script to process downloaded MIMIC demo data to generate daily counts of asthma and stroke cases from patient admissions and diagnoses
 python3 process_mimic_demo.py
 
 ##if errors occure with venv or permissions:
@@ -116,7 +99,6 @@ File → Preferences → KNIME → Python
 # automatically activate Conda and start KNIME with .sh script:
 ./launch_knime.sh
 ```
-
 
 ## 🧩 Troubleshooting and Lessons Learned
 
